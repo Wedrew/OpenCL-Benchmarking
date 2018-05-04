@@ -125,9 +125,9 @@ int main(int argc, char *argv[])
     printf("CPU Runtime: %0.6f seconds\n", cpuRunTime);
 
     if(gpuRunTime > cpuRunTime)
-        printf("Your CPU performed %0.2f times better than your GPU\n", (gpuRunTime-cpuRunTime)/cpuRunTime);
+        printf("Your CPU performed %0.2f times better than your GPU\n", gpuRunTime/cpuRunTime);
     else if(cpuRunTime > gpuRunTime)
-        printf("Your GPU performed %0.2f times better than your CPU\n", (cpuRunTime-gpuRunTime)/gpuRunTime);
+        printf("Your GPU performed %0.2f times better than your CPU\n", cpuRunTime/gpuRunTime);
     else
         printf("It's a tie!");
     printf("----------------------------\n");
