@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     float *A = malloc(sizeof(float)*VECTOR_SIZE);
     float *B = malloc(sizeof(float)*VECTOR_SIZE);
     float *C = malloc(sizeof(float)*VECTOR_SIZE);
-    
+
     size_t globalSize = VECTOR_SIZE; // Process the entire lists
     size_t localSize = 64;           // Process one item at a time
     char *KernelSource;
