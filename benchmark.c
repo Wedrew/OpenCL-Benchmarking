@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     {
         A[i] = i;
         B[i] = VECTOR_SIZE - i;
-        C[i] = 0.0;
     }
     
     // Get platform and device information
