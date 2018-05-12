@@ -27,6 +27,10 @@ int main(int argc, char *argv[])
     float *B = malloc(sizeof(float)*VECTOR_SIZE);
     float *C = malloc(sizeof(float)*VECTOR_SIZE);
 
+    float *D = malloc(sizeof(float)*VECTOR_SIZE);
+    float *E = malloc(sizeof(float)*VECTOR_SIZE);
+    float *F = malloc(sizeof(float)*VECTOR_SIZE);
+
     size_t globalSize = VECTOR_SIZE; // Process the entire lists
     size_t localSize = 64;           // Process one item at a time
     char *KernelSource;
@@ -46,7 +50,9 @@ int main(int argc, char *argv[])
     for(i = 0; i < VECTOR_SIZE; i++)
     {
         A[i] = i;
+        D[i] = i;
         B[i] = VECTOR_SIZE - i;
+        E[i] = VECTOR_SIZE - i;
     }
     
     // Get platform and device information
@@ -86,19 +92,17 @@ int main(int argc, char *argv[])
     // Create the OpenCL kernel
     cl_kernel kernel = clCreateKernel(program, "saxpy", &clStatus);
     // Set the arguments of the kernel
-    clStatus = clSetKernelArg(kernel, 0, sizeof(float), (void *)&alpha);
-    clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem),(void *)&A_clmem);
-    clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&B_clmem);
-    clStatus = clSetKernelArg(kernel, 3, sizeof(cl_mem),(void *)&C_clmem);
+    clStatus = clSetKernelArg(kernel, 0, sizeof(float), &alpha);
+    clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &A_clmem);
+    clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &B_clmem);
+    clStatus = clSetKernelArg(kernel, 3, sizeof(cl_mem), &C_clmem);
 
     // Execute the OpenCL kernel on the list
     printf("Executing on GPU...\n");
     clStatus = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, &globalSize, &localSize, 0, NULL, &event);
-    clWaitForEvents(1, &event);
+    
     // Read the cl memory C_clmem on device to the host variable C
     clStatus = clEnqueueReadBuffer(commandQueue, C_clmem, CL_TRUE, 0, VECTOR_SIZE * sizeof(float), C, 0, NULL, NULL);
-    // Clean up and wait for all the comands to complete.
-    clStatus = clFinish(commandQueue);
 
     clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(gpuStart), &gpuStart, NULL);
     clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(gpuEnd), &gpuEnd, NULL);
@@ -117,7 +121,7 @@ int main(int argc, char *argv[])
     clock_t cpuBegin = clock();
     for (i = 0; i < VECTOR_SIZE; ++i)
     {
-       C[i] = alpha * A[i] + C[i];
+       F[i] = alpha * D[i] + E[i];
     }
     clock_t cpuEnd = clock();
 
