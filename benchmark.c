@@ -92,10 +92,9 @@ int main(int argc, char *argv[])
     // Create the OpenCL kernel
     cl_kernel kernel = clCreateKernel(program, "saxpy", &clStatus);
     // Set the arguments of the kernel
-    clStatus = clSetKernelArg(kernel, 0, sizeof(float), &alpha);
-    clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &A_clmem);
-    clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &B_clmem);
-    clStatus = clSetKernelArg(kernel, 3, sizeof(cl_mem), &C_clmem);
+    clStatus = clSetKernelArg(kernel, 0, sizeof(cl_mem), &A_clmem);
+    clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &B_clmem);
+    clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &C_clmem);
 
     // Execute the OpenCL kernel on the list
     printf("Executing on GPU...\n");

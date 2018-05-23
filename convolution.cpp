@@ -1,133 +1,99 @@
-#include <iostream>
-#include <vector>
-#include <string>
+/*
+ * Display Device Information
+ *
+ * Script to print out some information about the OpenCL devices
+ * and platforms available on your system
+ *
+ * History: C++ version written by Tom Deakin, 2012
+ *          Updated by Tom Deakin, August 2013
+*/
 
 #define __CL_ENABLE_EXCEPTIONS
-#include <OpenCL/cl.hpp>
 
-// Compute c = a + b.
-static const char source[] =
-    "#if defined(cl_khr_fp64)\n"
-    "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
-    "#elif defined(cl_amd_fp64)\n"
-    "#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n"
-    "#else\n"
-    "#  error double precision is not supported\n"
-    "#endif\n"
-    "kernel void add(\n"
-    "       ulong n,\n"
-    "       global const double *a,\n"
-    "       global const double *b,\n"
-    "       global double *c\n"
-    "       )\n"
-    "{\n"
-    "    size_t i = get_global_id(0);\n"
-    "    if (i < n) {\n"
-    "       c[i] = a[i] + b[i];\n"
-    "    }\n"
-    "}\n";
+#include "OpenCL/cl.hpp"
+#include <iostream>
+#include <vector>
 
-int main() {
-    const size_t N = 1 << 20;
 
-    try {
-	// Get list of OpenCL platforms.
-	std::vector<cl::Platform> platform;
-	cl::Platform::get(&platform);
+int main(void)
+{
 
-	if (platform.empty()) {
-	    std::cerr << "OpenCL platforms not found." << std::endl;
-	    return 1;
-	}
+  try
+  {
+    // Discover number of platforms
+    std::vector<cl::Platform> platforms;
+    cl::Platform::get(&platforms);
+    std::cout << "\nNumber of OpenCL plaforms: " << platforms.size() << std::endl;
 
-	// Get first available GPU device which supports double precision.
-	cl::Context context;
-	std::vector<cl::Device> device;
-	for(auto p = platform.begin(); device.empty() && p != platform.end(); p++) {
-	    std::vector<cl::Device> pldev;
+    // Investigate each platform
+    std::cout << "\n-------------------------" << std::endl;
+    for (std::vector<cl::Platform>::iterator plat = platforms.begin(); plat != platforms.end(); plat++)
+    {
+      std::string s;
+      plat->getInfo(CL_PLATFORM_NAME, &s);
+      std::cout << "Platform: " << s << std::endl;
 
-	    try {
-		p->getDevices(CL_DEVICE_TYPE_GPU, &pldev);
+      plat->getInfo(CL_PLATFORM_VENDOR, &s);
+      std::cout << "\tVendor:  " << s << std::endl;
 
-		for(auto d = pldev.begin(); device.empty() && d != pldev.end(); d++) {
-		    if (!d->getInfo<CL_DEVICE_AVAILABLE>()) continue;
+      plat->getInfo(CL_PLATFORM_VERSION, &s);
+      std::cout << "\tVersion: " << s << std::endl;
 
-		    std::string ext = d->getInfo<CL_DEVICE_EXTENSIONS>();
+      // Discover number of devices
+      std::vector<cl::Device> devices;
+      plat->getDevices(CL_DEVICE_TYPE_ALL, &devices);
+      std::cout << "\n\tNumber of devices: " << devices.size() << std::endl;
 
-		    if (
-			    ext.find("cl_khr_fp64") == std::string::npos &&
-			    ext.find("cl_amd_fp64") == std::string::npos
-		       ) continue;
+      // Investigate each device
+      for (std::vector<cl::Device>::iterator dev = devices.begin(); dev != devices.end(); dev++ )
+      {
+        std::cout << "\t-------------------------" << std::endl;
 
-		    device.push_back(*d);
-		    context = cl::Context(device);
-		}
-	    } catch(...) {
-		device.clear();
-	    }
-	}
+        dev->getInfo(CL_DEVICE_NAME, &s);
+        std::cout << "\t\tName: " << s << std::endl;
 
-	if (device.empty()) {
-	    std::cerr << "GPUs with double precision not found." << std::endl;
-	    return 1;
-	}
+        dev->getInfo(CL_DEVICE_OPENCL_C_VERSION, &s);
+        std::cout << "\t\tVersion: " << s << std::endl;
 
-	std::cout << device[0].getInfo<CL_DEVICE_NAME>() << std::endl;
+        int i;
+        dev->getInfo(CL_DEVICE_MAX_COMPUTE_UNITS, &i);
+        std::cout << "\t\tMax. Compute Units: " << i << std::endl;
 
-	// Create command queue.
-	cl::CommandQueue queue(context, device[0]);
+        size_t size;
+        dev->getInfo(CL_DEVICE_LOCAL_MEM_SIZE, &size);
+        std::cout << "\t\tLocal Memory Size: " << size/1024 << " KB" << std::endl;
 
-	// Compile OpenCL program for found device.
-	cl::Program program(context, cl::Program::Sources(
-		    1, std::make_pair(source, strlen(source))
-		    ));
+        dev->getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &size);
+        std::cout << "\t\tGlobal Memory Size: " << size/(1024*1024) << " MB" << std::endl;
 
-	try {
-	    program.build(device);
-	} catch (const cl::Error&) {
-	    std::cerr
-		<< "OpenCL compilation error" << std::endl
-		<< program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device[0])
-		<< std::endl;
-	    return 1;
-	}
+        dev->getInfo(CL_DEVICE_MAX_MEM_ALLOC_SIZE, &size);
+        std::cout << "\t\tMax Alloc Size: " << size/(1024*1024) << " MB" << std::endl;
 
-	cl::Kernel add(program, "add");
+        dev->getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &size);
+        std::cout << "\t\tMax Work-group Total Size: " << size << std::endl;
 
-	// Prepare input data.
-	std::vector<double> a(N, 1);
-	std::vector<double> b(N, 2);
-	std::vector<double> c(N);
+        std::vector<size_t> d;
+        dev->getInfo(CL_DEVICE_MAX_WORK_ITEM_SIZES, &d);
+        std::cout << "\t\tMax Work-group Dims: (";
+        for (std::vector<size_t>::iterator st = d.begin(); st != d.end(); st++)
+          std::cout << *st << " ";
+        std::cout << "\x08)" << std::endl;
 
-	// Allocate device buffers and transfer input data to device.
-	cl::Buffer A(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		a.size() * sizeof(double), a.data());
+        std::cout << "\t-------------------------" << std::endl;
 
-	cl::Buffer B(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		b.size() * sizeof(double), b.data());
+      }
 
-	cl::Buffer C(context, CL_MEM_READ_WRITE,
-		c.size() * sizeof(double));
-
-	// Set kernel parameters.
-	add.setArg(0, static_cast<cl_ulong>(N));
-	add.setArg(1, A);
-	add.setArg(2, B);
-	add.setArg(3, C);
-	
-	// Launch kernel on the compute device.
-	queue.enqueueNDRangeKernel(add, cl::NullRange, N, cl::NullRange);
-
-	// Get result back to host.
-	queue.enqueueReadBuffer(C, CL_TRUE, 0, c.size() * sizeof(double), c.data());
-
-	// Should get '3' here.
-	std::cout << c[42] << std::endl;
-    } catch (const cl::Error &err) {
-	std::cerr
-	    << "OpenCL error: "
-	    << err.what() << "(" << err.err() << ")"
-	    << std::endl;
-	return 1;
+      std::cout << "\n-------------------------\n";
     }
+
+  }
+  catch (cl::Error err)
+  {
+    //std::cout << "OpenCL Error: " << err.what() << " returned " << err_code(err.err()) << std::endl;
+    std::cout << "Check cl.h for error codes." << std::endl;
+    exit(-1);
+  }
+
+  return 0;
+
 }
