@@ -1,13 +1,3 @@
-/*
- * Display Device Information
- *
- * Script to print out some information about the OpenCL devices
- * and platforms available on your system
- *
- * History: C++ version written by Tom Deakin, 2012
- *          Updated by Tom Deakin, August 2013
-*/
-
 #define __CL_ENABLE_EXCEPTIONS
 
 #include "OpenCL/cl.hpp"
