@@ -9,9 +9,9 @@
     #include <CL/cl.h>
 #endif
 
-#define VECTOR_SIZE 134217728 //Increase this for more calculations (Must be of the form n^2 i.e. 4096*4096)
-#define GPU 1 //Change this to 0 for integrated graphics card
-const char* file = "./saxpy.cl";
+#define VECTOR_SIZE 16777216 //Increase this for more calculations (Must be of the form n^2 i.e. 4096*4096)
+#define GPU 0 //Change this to 0 for integrated graphics card
+const char* file = "saxpy.cl";
 
 void DisplayDevices(cl_device_id *deviceList, size_t valueSize, cl_uint maxComputeUnits);
 
