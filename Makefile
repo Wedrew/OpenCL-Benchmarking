@@ -1,4 +1,4 @@
-CC=gcc-8
+CC=gcc
 
 SRC_BENCHMARK = benchmark.c
 OUT_BENCHMARK= benchmark
@@ -6,7 +6,7 @@ OUT_BENCHMARK= benchmark
 all: clean benchmark
 
 benchmark:
-	$(CC) $(SRC_BENCHMARK) -o $(OUT_BENCHMARK) -framework OpenCL
+	$(CC) $(SRC_BENCHMARK) -o $(OUT_BENCHMARK)
 
 clean:
 	rm -f $(OUT_BENCHMARK)
